@@ -13,7 +13,7 @@ public class Hash {
   // | Fields |
   // +--------+
 
-  byte[] byteData;
+  private byte[] byteData;
   // +--------------+------------------------------------------------
   // | Constructors |
   // +--------------+

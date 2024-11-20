@@ -1,5 +1,9 @@
 package edu.grinnell.csc207.blockchains;
 
+import java.nio.ByteBuffer;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
 /**
  * Blocks to be stored in blockchains.
  *
@@ -10,6 +14,12 @@ public class Block {
   // +--------+------------------------------------------------------
   // | Fields |
   // +--------+
+  private int numBlocks;
+  private Transaction transactionData;
+  private Hash previousHash;
+  private Hash hash;
+  private long blockNonce; 
+  private HashValidator validator;
 
   // +--------------+------------------------------------------------
   // | Constructors |
@@ -31,7 +41,10 @@ public class Block {
    */
   public Block(int num, Transaction transaction, Hash prevHash,
       HashValidator check) {
-    // STUB
+    this.numBlocks = num;
+    this.transactionData = transaction;
+    this.previousHash = prevHash;
+    this.validator = check; //STUB
   } // Block(int, Transaction, Hash, HashValidator)
 
   /**
@@ -47,7 +60,14 @@ public class Block {
    *   The nonce of the block.
    */
   public Block(int num, Transaction transaction, Hash prevHash, long nonce) {
-    // STUB
+    this(num, transaction, prevHash, null);
+    this.blockNonce = nonce;
+    try {
+      this.computeHash();
+    } catch (Exception e) {
+      // TODO: handle exception
+      // STUB
+    }
   } // Block(int, Transaction, Hash, long)
 
   // +---------+-----------------------------------------------------
@@ -58,8 +78,25 @@ public class Block {
    * Compute the hash of the block given all the other info already
    * stored in the block.
    */
-  static void computeHash() {
-    // STUB
+  void computeHash() throws NoSuchAlgorithmException {
+    MessageDigest md = MessageDigest.getInstance("sha-256");
+    byte[] ibytes = ByteBuffer.allocate(Integer.BYTES).putInt(this.numBlocks).array(); // block number
+    md.update(ibytes);
+    byte[] sourceBytes = this.transactionData.getSource().getBytes(); // source
+    md.update(sourceBytes);
+    byte[] targetBytes = this.transactionData.getTarget().getBytes(); // target
+    md.update(targetBytes);
+    byte[] amountBytes = ByteBuffer.allocate(Integer.BYTES).putInt(this.transactionData.getAmount()).array(); // amount
+    md.update(amountBytes);
+    if(this.previousHash != null) { 
+      byte[] prevBytes = this.previousHash.getBytes();
+      md.update(prevBytes);
+    }
+    byte[] lbytes = ByteBuffer.allocate(Long.BYTES).putLong(this.blockNonce).array(); // nonce
+    md.update(lbytes);
+
+    byte[] hash = md.digest();
+    this.hash = new Hash(hash);
   } // computeHash()
 
   // +---------+-----------------------------------------------------
@@ -72,7 +109,7 @@ public class Block {
    * @return the number of the block.
    */
   public int getNum() {
-    return 0;   // STUB
+    return this.numBlocks;
   } // getNum()
 
   /**
@@ -81,7 +118,7 @@ public class Block {
    * @return the transaction.
    */
   public Transaction getTransaction() {
-    return new Transaction("Here", "There", 0); // STUB
+    return this.transactionData;
   } // getTransaction()
 
   /**
@@ -90,7 +127,7 @@ public class Block {
    * @return the nonce.
    */
   public long getNonce() {
-    return 0;   // STUB
+    return this.blockNonce;
   } // getNonce()
 
   /**
@@ -99,7 +136,7 @@ public class Block {
    * @return the hash of the previous block.
    */
   Hash getPrevHash() {
-    return new Hash(new byte[] {0});  // STUB
+    return this.previousHash;
   } // getPrevHash
 
   /**
@@ -108,7 +145,7 @@ public class Block {
    * @return the hash of the current block.
    */
   Hash getHash() {
-    return new Hash(new byte[] {0});  // STUB
+    return this.hash;
   } // getHash
 
   /**
