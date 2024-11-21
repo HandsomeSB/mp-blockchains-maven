@@ -90,6 +90,7 @@ public class BlockChain implements Iterable<Transaction> {
       newNode.previous = this.tail;
       this.tail = newNode;
     } 
+    this.totalBlocks++;
   } // append()
 
   /**
@@ -100,7 +101,14 @@ public class BlockChain implements Iterable<Transaction> {
    *   is removed).
    */
   public boolean removeLast() {
-    return true;        // STUB
+    if(this.totalBlocks <= 1) { 
+      return false;
+    } else { 
+      this.tail.previous.next = null;
+      this.tail = this.tail.previous;
+      this.totalBlocks--;
+      return true;
+    }
   } // removeLast()
 
   /**
