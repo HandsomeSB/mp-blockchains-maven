@@ -43,7 +43,9 @@ public class Block {
     this.numBlocks = num;
     this.transactionData = transaction;
     this.previousHash = prevHash;
-    this.mine(check);
+    if(check != null) { 
+      this.mine(check);
+    }
   } // Block(int, Transaction, Hash, HashValidator)
 
   /**
@@ -78,7 +80,12 @@ public class Block {
 
   public static Hash computeHash(Block blk) { 
     try {
-      MessageDigest md = MessageDigest.getInstance("sha-256");
+      MessageDigest md = MessageDigest.getInstance("sha-256"); //STUB
+      /**
+       * Avoids recreating structures---such as the `MessageDigest`, the
+       * various `ByteBuffer` objects, and other individual arrays---that 
+       * need not be recreated. 
+       */
       byte[] ibytes = ByteBuffer.allocate(Integer.BYTES).putInt(blk.numBlocks).array(); // block number
       md.update(ibytes);
       byte[] sourceBytes = blk.transactionData.getSource().getBytes(); // source
