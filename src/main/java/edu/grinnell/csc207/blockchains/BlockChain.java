@@ -12,7 +12,10 @@ public class BlockChain implements Iterable<Transaction> {
   // +--------+------------------------------------------------------
   // | Fields |
   // +--------+
-
+  private int totalBlocks;
+  private Node<Block> head;
+  private Node<Block> tail;
+  private HashValidator validator;
   // +--------------+------------------------------------------------
   // | Constructors |
   // +--------------+
@@ -24,7 +27,8 @@ public class BlockChain implements Iterable<Transaction> {
    *   The validator used to check elements.
    */
   public BlockChain(HashValidator check) {
-    // STUB
+    this.totalBlocks = 0;
+    this.validator = check;
   } // BlockChain(HashValidator)
 
   // +---------+-----------------------------------------------------
@@ -45,7 +49,8 @@ public class BlockChain implements Iterable<Transaction> {
    * @return a new block with correct number, hashes, and such.
    */
   public Block mine(Transaction t) {
-    return new Block(10, t, new Hash(new byte[] {7}), 11);       // STUB
+    Block newBlock = new Block(totalBlocks, t, getHash(), this.validator);
+    return newBlock;
   } // mine(Transaction)
 
   /**
@@ -54,7 +59,7 @@ public class BlockChain implements Iterable<Transaction> {
    * @return the number of blocks in the chain, including the initial block.
    */
   public int getSize() {
-    return 2;   // STUB
+    return this.totalBlocks;
   } // getSize()
 
   /**
@@ -67,8 +72,24 @@ public class BlockChain implements Iterable<Transaction> {
    *   the hash is not appropriate for the contents, or (c) the previous
    *   hash is incorrect.
    */
-  public void append(Block blk) {
-    // STUB
+  public void append(Block blk) throws IllegalArgumentException {
+    if(!this.validator.isValid(blk.getHash())) { 
+      throw new IllegalArgumentException("The Hash is not valid.");
+    } else if (!blk.getHash().equals(Block.computeHash(blk))) { 
+      throw new IllegalArgumentException("Hash is not appropriate for the contents.");
+    } else if (!this.tail.getData().getHash().equals(blk.getPrevHash())) { 
+      throw new IllegalArgumentException("Previous hash is incorrect");
+    }
+
+    Node<Block> newNode = new Node<Block>(blk);
+    if(this.head == null) { 
+      this.head = newNode;
+      this.tail = this.head;
+    } else { 
+      this.tail.next = newNode;
+      newNode.previous = this.tail;
+      this.tail = newNode;
+    } 
   } // append()
 
   /**
@@ -88,7 +109,11 @@ public class BlockChain implements Iterable<Transaction> {
    * @return the hash of the last sblock in the chain.
    */
   public Hash getHash() {
-    return new Hash(new byte[] {2, 0, 7});   // STUB
+    if(this.tail != null) { 
+      return this.tail.getData().getHash();
+    } else { 
+      return null;
+    }
   } // getHash()
 
   /**
