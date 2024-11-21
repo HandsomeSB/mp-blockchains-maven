@@ -74,7 +74,7 @@ public class Hash {
 
     for(byte b : this.byteData) { 
       int unsignedInt = Byte.toUnsignedInt(b);
-      String hex = String.format("%X", unsignedInt);
+      String hex = String.format("%02X", unsignedInt);
       str.append(hex);
     }
 
