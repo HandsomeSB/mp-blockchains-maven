@@ -6,7 +6,7 @@ import java.util.NoSuchElementException;
 /**
  * A full blockchain.
  *
- * @author Your Name Here
+ * @author Harrison Zhu
  */
 public class BlockChain implements Iterable<Transaction> {
   // +--------+------------------------------------------------------
