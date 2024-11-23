@@ -76,15 +76,7 @@ public class BlockChain implements Iterable<Transaction> {
    *   hash is incorrect.
    */
   public void append(Block blk) throws IllegalArgumentException {
-    if(!this.validator.isValid(blk.getHash())) { 
-      throw new IllegalArgumentException("The Hash is not valid.");
-    } else if (!blk.getHash().equals(Block.computeHash(blk))) { 
-      throw new IllegalArgumentException("Hash is not appropriate for the contents.");
-    } else if (!this.tail.getData().getHash().equals(blk.getPrevHash())) { 
-      throw new IllegalArgumentException("Previous hash is incorrect");
-    } else if (!this.isValidTransaction(this.balances, blk.getTransaction())) { 
-      throw new IllegalArgumentException("Invalid transaction");
-    }
+    checkBlock(blk);
 
     Node<Block> newNode = new Node<Block>(blk);
     if(this.head == null) { 
@@ -137,7 +129,7 @@ public class BlockChain implements Iterable<Transaction> {
    * 
    * @return
    */
-  public boolean isValidTransaction(Map<String, Integer> balanceMap, Transaction transaction) { 
+  private boolean isValidTransaction(Map<String, Integer> balanceMap, Transaction transaction) { 
     int sourceBalance = this.balance(balanceMap, transaction.getSource());
     return sourceBalance >= transaction.getAmount();
   }
@@ -149,12 +141,55 @@ public class BlockChain implements Iterable<Transaction> {
    * 
    * @param transaction the transaction to process
    */
-  public void processTransaction(Map<String, Integer> balanceMap, Transaction transaction) { 
+  private void processTransaction(Map<String, Integer> balanceMap, Transaction transaction) { 
     int sourceBalance = this.balance(balanceMap, transaction.getSource());
     int targetBalance = this.balance(balanceMap, transaction.getTarget());
 
     balanceMap.put(transaction.getSource(), sourceBalance - transaction.getAmount());
     balanceMap.put(transaction.getTarget(), targetBalance + transaction.getAmount());
+  }
+
+  /**
+   * Checks if the block is valid. Throws errors if invalid.
+   * 
+   * @param blk
+   *   The block to add to the end of the chain.
+   *
+   * @throws IllegalArgumentException if (a) the hash is not valid, (b)
+   *   the hash is not appropriate for the contents, or (c) the previous
+   *   hash is incorrect.
+   */
+  public void checkBlock(Block blk) throws IllegalArgumentException { 
+    if(!this.validator.isValid(blk.getHash())) { 
+      throw new IllegalArgumentException("The Hash is not valid.");
+    } else if (!blk.getHash().equals(Block.computeHash(blk))) { 
+      throw new IllegalArgumentException("Hash is not appropriate for the contents.");
+    } else if (!this.tail.getData().getHash().equals(blk.getPrevHash())) { 
+      throw new IllegalArgumentException("Previous hash is incorrect");
+    } else if (!this.isValidTransaction(this.balances, blk.getTransaction())) { 
+      throw new IllegalArgumentException("Invalid transaction");
+    }
+  }
+
+  /**
+   * Checks if the block is valid. Throws errors if invalid.
+   * 
+   * @param blk
+   *   The block to add to the end of the chain.
+   *
+   * Invalid cases: if (a) the hash is not valid, (b)
+   *   the hash is not appropriate for the contents, or (c) the previous
+   *   hash is incorrect.
+   * 
+   * @return True of blk is valid. 
+   */
+  private boolean isValidBlock(Block blk) { 
+    try {
+      this.checkBlock(blk);
+      return true;
+    } catch (Exception e) {
+      return false;
+    }
   }
 
   /**
@@ -166,6 +201,14 @@ public class BlockChain implements Iterable<Transaction> {
    * @return true if the blockchain is correct and false otherwise.
    */
   public boolean isCorrect() {
+    /**
+     *    * @throws IllegalArgumentException if (a) the hash is not valid, (b)
+   *   the hash is not appropriate for the contents, or (c) the previous
+   *   hash is incorrect.
+     */
+    Map<String, Integer> checkMap = new HashMap<String, Integer>();
+
+
     return true;        // STUB
   } // isCorrect()
 
