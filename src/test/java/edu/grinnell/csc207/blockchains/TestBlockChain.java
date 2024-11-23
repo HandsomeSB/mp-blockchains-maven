@@ -1,6 +1,7 @@
 package edu.grinnell.csc207.blockchains;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import org.junit.jupiter.api.Test;
@@ -35,5 +36,9 @@ public class TestBlockChain {
         } catch (Exception e) {
             fail(e);
         }
+
+        assertEquals(30, chain.balance("Alexis"));
+        assertEquals(20, chain.balance("Blake"));
+        assertEquals(0, chain.balance("Cassidy"));
     }
 } // class TestBlockChain
