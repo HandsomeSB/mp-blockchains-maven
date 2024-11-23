@@ -164,7 +164,7 @@ public class BlockChain implements Iterable<Transaction> {
       throw new IllegalArgumentException("The Hash is not valid.");
     } else if (!blk.getHash().equals(Block.computeHash(blk))) { 
       throw new IllegalArgumentException("Hash is not appropriate for the contents.");
-    } else if (!this.tail.getData().getHash().equals(blk.getPrevHash())) { 
+    } else if (!this.tail.getData().getHash().equals(blk.getPrevHash())) { //STUB tail can be null
       throw new IllegalArgumentException("Previous hash is incorrect");
     } else if (!this.isValidTransaction(this.balances, blk.getTransaction())) { 
       throw new IllegalArgumentException("Invalid transaction");
@@ -172,7 +172,7 @@ public class BlockChain implements Iterable<Transaction> {
   }
 
   /**
-   * Checks if the block is valid. Throws errors if invalid.
+   * Checks if the block is valid. 
    * 
    * @param blk
    *   The block to add to the end of the chain.
@@ -201,15 +201,12 @@ public class BlockChain implements Iterable<Transaction> {
    * @return true if the blockchain is correct and false otherwise.
    */
   public boolean isCorrect() {
-    /**
-     *    * @throws IllegalArgumentException if (a) the hash is not valid, (b)
-   *   the hash is not appropriate for the contents, or (c) the previous
-   *   hash is incorrect.
-     */
-    Map<String, Integer> checkMap = new HashMap<String, Integer>();
-
-
-    return true;        // STUB
+    try {
+      check();
+      return true;
+    } catch (Exception e) {
+      return false;
+    }
   } // isCorrect()
 
   /**
@@ -222,7 +219,16 @@ public class BlockChain implements Iterable<Transaction> {
    *   If things are wrong at any block.
    */
   public void check() throws Exception {
-    // STUB
+    Map<String, Integer> checkMap = new HashMap<String, Integer>();
+    Iterator<Block> blkIterator = this.blocks();
+    while(blkIterator.hasNext()) { 
+      Block blk = blkIterator.next();
+      if(isValidTransaction(checkMap, blk.getTransaction()) && isValidBlock(blk)) { 
+        processTransaction(checkMap, blk.getTransaction());
+      } else { 
+        throw new Exception("Invalid block found at : " + blk.toString());
+      }
+    }
   } // check()
 
   /**
