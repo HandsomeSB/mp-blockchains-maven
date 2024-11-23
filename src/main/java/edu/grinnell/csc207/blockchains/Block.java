@@ -173,6 +173,7 @@ public class Block {
    * @return a string representation of the block.
    */
   public String toString() {
-    return "";  // STUB
+    return String.format("[%s, Transaction: %s, Hash: %s, PreviousHash: %s]",
+    this.numBlocks, this.transactionData, this.hash, this.previousHash);
   } // toString()
 } // class Block

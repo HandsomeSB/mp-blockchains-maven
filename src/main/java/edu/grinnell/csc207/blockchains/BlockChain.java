@@ -132,7 +132,7 @@ public class BlockChain implements Iterable<Transaction> {
    */
   private boolean isValidTransaction(Map<String, Integer> balanceMap, Transaction transaction) { 
     int sourceBalance = this.balance(balanceMap, transaction.getSource());
-    return sourceBalance >= transaction.getAmount();
+    return transaction.getSource().equals("") || sourceBalance >= transaction.getAmount();
   }
 
   /**
@@ -162,14 +162,13 @@ public class BlockChain implements Iterable<Transaction> {
    */
   public void checkBlock(Block blk) throws IllegalArgumentException { 
     if(!this.validator.isValid(blk.getHash())) { 
-      throw new IllegalArgumentException("The Hash is not valid.");
+      throw new IllegalArgumentException("The Hash is not valid : " + blk);
     } else if (!blk.getHash().equals(Block.computeHash(blk))) { 
-      throw new IllegalArgumentException("Hash is not appropriate for the contents.");
-    } else if ((this.tail == null && blk.getPrevHash() != null) || 
-              !this.tail.getData().getHash().equals(blk.getPrevHash())) { 
-      throw new IllegalArgumentException("Previous hash is incorrect");
+      throw new IllegalArgumentException("Hash is not appropriate for the contents: " + blk);
+    } else if (blk.getPrevHash() != null && !blk.getPrevHash().equals(this.getHash())) { 
+      throw new IllegalArgumentException("Previous hash is incorrect: " + blk + " tail: " + this.tail.getData());
     } else if (!this.isValidTransaction(this.balances, blk.getTransaction())) { 
-      throw new IllegalArgumentException("Invalid transaction");
+      throw new IllegalArgumentException("Invalid transaction: " + blk);
     }
   }
 
