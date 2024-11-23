@@ -1,5 +1,7 @@
 package edu.grinnell.csc207.blockchains;
 
+import java.util.Map;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -16,6 +18,7 @@ public class BlockChain implements Iterable<Transaction> {
   private Node<Block> head;
   private Node<Block> tail;
   private HashValidator validator;
+  private Map<String, Integer> balances = new HashMap<String, Integer>();
   // +--------------+------------------------------------------------
   // | Constructors |
   // +--------------+
@@ -79,6 +82,8 @@ public class BlockChain implements Iterable<Transaction> {
       throw new IllegalArgumentException("Hash is not appropriate for the contents.");
     } else if (!this.tail.getData().getHash().equals(blk.getPrevHash())) { 
       throw new IllegalArgumentException("Previous hash is incorrect");
+    } else if (!this.isValidTransaction(blk.getTransaction())) { 
+      throw new IllegalArgumentException("Invalid transaction");
     }
 
     Node<Block> newNode = new Node<Block>(blk);
@@ -91,6 +96,7 @@ public class BlockChain implements Iterable<Transaction> {
       this.tail = newNode;
     } 
     this.totalBlocks++;
+    this.processTransaction(blk.getTransaction());
   } // append()
 
   /**
@@ -137,6 +143,33 @@ public class BlockChain implements Iterable<Transaction> {
   } // isCorrect()
 
   /**
+   * Check if the transaction is correct, assuming the block chain is valid.
+   * 
+   * @param transaction
+   * 
+   * @return
+   */
+  public boolean isValidTransaction(Transaction transaction) { 
+    int sourceBalance = this.balance(transaction.getSource());
+    return sourceBalance >= transaction.getAmount();
+  }
+
+  /**
+   * Process the transaction, adding to balances table.
+   * Does not check or assume that the transaction is correct.
+   * Thus source can have negative balance
+   * 
+   * @param transaction the transaction to process
+   */
+  public void processTransaction(Transaction transaction) { 
+    int sourceBalance = this.balance(transaction.getSource());
+    int targetBalance = this.balance(transaction.getTarget());
+
+    this.balances.put(transaction.getSource(), sourceBalance - transaction.getAmount());
+    this.balances.put(transaction.getTarget(), targetBalance + transaction.getAmount());
+  }
+
+  /**
    * Determine if the blockchain is correct in that (a) the balances are
    * legal/correct at every step, (b) that every block has a correct
    * previous hash field, (c) that every block has a hash that is correct
@@ -176,7 +209,8 @@ public class BlockChain implements Iterable<Transaction> {
    * @return that user's balance (or 0, if the user is not in the system).
    */
   public int balance(String user) {
-    return 0;   // STUB
+    Integer balance = this.balances.get(user);
+    return balance == null ? 0 : balance.intValue();
   } // balance()
 
   /**
