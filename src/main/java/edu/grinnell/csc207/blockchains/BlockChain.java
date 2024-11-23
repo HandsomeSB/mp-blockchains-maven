@@ -82,7 +82,7 @@ public class BlockChain implements Iterable<Transaction> {
       throw new IllegalArgumentException("Hash is not appropriate for the contents.");
     } else if (!this.tail.getData().getHash().equals(blk.getPrevHash())) { 
       throw new IllegalArgumentException("Previous hash is incorrect");
-    } else if (!this.isValidTransaction(blk.getTransaction())) { 
+    } else if (!this.isValidTransaction(this.balances, blk.getTransaction())) { 
       throw new IllegalArgumentException("Invalid transaction");
     }
 
@@ -96,7 +96,7 @@ public class BlockChain implements Iterable<Transaction> {
       this.tail = newNode;
     } 
     this.totalBlocks++;
-    this.processTransaction(blk.getTransaction());
+    this.processTransaction(this.balances, blk.getTransaction());
   } // append()
 
   /**
@@ -131,26 +131,14 @@ public class BlockChain implements Iterable<Transaction> {
   } // getHash()
 
   /**
-   * Determine if the blockchain is correct in that (a) the balances are
-   * legal/correct at every step, (b) that every block has a correct
-   * previous hash field, (c) that every block has a hash that is correct
-   * for its contents, and (d) that every block has a valid hash.
-   *
-   * @return true if the blockchain is correct and false otherwise.
-   */
-  public boolean isCorrect() {
-    return true;        // STUB
-  } // isCorrect()
-
-  /**
    * Check if the transaction is correct, assuming the block chain is valid.
    * 
    * @param transaction
    * 
    * @return
    */
-  public boolean isValidTransaction(Transaction transaction) { 
-    int sourceBalance = this.balance(transaction.getSource());
+  public boolean isValidTransaction(Map<String, Integer> balanceMap, Transaction transaction) { 
+    int sourceBalance = this.balance(balanceMap, transaction.getSource());
     return sourceBalance >= transaction.getAmount();
   }
 
@@ -161,13 +149,25 @@ public class BlockChain implements Iterable<Transaction> {
    * 
    * @param transaction the transaction to process
    */
-  public void processTransaction(Transaction transaction) { 
-    int sourceBalance = this.balance(transaction.getSource());
-    int targetBalance = this.balance(transaction.getTarget());
+  public void processTransaction(Map<String, Integer> balanceMap, Transaction transaction) { 
+    int sourceBalance = this.balance(balanceMap, transaction.getSource());
+    int targetBalance = this.balance(balanceMap, transaction.getTarget());
 
-    this.balances.put(transaction.getSource(), sourceBalance - transaction.getAmount());
-    this.balances.put(transaction.getTarget(), targetBalance + transaction.getAmount());
+    balanceMap.put(transaction.getSource(), sourceBalance - transaction.getAmount());
+    balanceMap.put(transaction.getTarget(), targetBalance + transaction.getAmount());
   }
+
+  /**
+   * Determine if the blockchain is correct in that (a) the balances are
+   * legal/correct at every step, (b) that every block has a correct
+   * previous hash field, (c) that every block has a hash that is correct
+   * for its contents, and (d) that every block has a valid hash.
+   *
+   * @return true if the blockchain is correct and false otherwise.
+   */
+  public boolean isCorrect() {
+    return true;        // STUB
+  } // isCorrect()
 
   /**
    * Determine if the blockchain is correct in that (a) the balances are
@@ -209,9 +209,13 @@ public class BlockChain implements Iterable<Transaction> {
    * @return that user's balance (or 0, if the user is not in the system).
    */
   public int balance(String user) {
-    Integer balance = this.balances.get(user);
-    return balance == null ? 0 : balance.intValue();
+    return this.balance(this.balances, user);
   } // balance()
+
+  private int balance(Map<String, Integer> balanceMap, String user) { 
+    Integer balance = balanceMap.get(user);
+    return balance == null ? 0 : balance.intValue();
+  }
 
   /**
    * Get an interator for all the blocks in the chain.
