@@ -17,17 +17,13 @@ public class IOUtils {
   /**
    * Prompt for a string and return it.
    *
-   * @param pen
-   *   Where to print the prompt.
-   * @param eyes
-   *   How to read input.
-   * @param prompt
-   *   The prompt to print.
-   *
+   * @param pen Where to print the prompt.
+   * @param eyes How to read input.
+   * @param prompt The prompt to print.
    * @return the string read.
    */
-  public static String readLine(PrintWriter pen, BufferedReader eyes,
-      String prompt) throws IOException {
+  public static String readLine(PrintWriter pen, BufferedReader eyes, String prompt)
+      throws IOException {
     pen.print(prompt);
     pen.flush();
     return eyes.readLine();
@@ -36,20 +32,14 @@ public class IOUtils {
   /**
    * Read an integer.
    *
-   * @param pen
-   *   Where to print the prompt.
-   * @param eyes
-   *   How to read input.
-   * @param prompt
-   *   The prompt to print.
-   *
+   * @param pen Where to print the prompt.
+   * @param eyes How to read input.
+   * @param prompt The prompt to print.
    * @return the integer read
-   *
-   * @throws IOException
-   *   If an I/O exception occurs.
+   * @throws IOException If an I/O exception occurs.
    */
-  public static int readInt(PrintWriter pen, BufferedReader eyes,
-      String prompt) throws IOException {
+  public static int readInt(PrintWriter pen, BufferedReader eyes, String prompt)
+      throws IOException {
     int result = 0;
     boolean done = false;
     while (!done) {
@@ -69,20 +59,14 @@ public class IOUtils {
   /**
    * Read a long.
    *
-   * @param pen
-   *   Where to print the prompt.
-   * @param eyes
-   *   How to read input.
-   * @param prompt
-   *   The prompt to print.
-   *
+   * @param pen Where to print the prompt.
+   * @param eyes How to read input.
+   * @param prompt The prompt to print.
    * @return the long read
-   *
-   * @throws IOException
-   *   If an I/O exception occurs.
+   * @throws IOException If an I/O exception occurs.
    */
-  public static long readLong(PrintWriter pen, BufferedReader eyes,
-      String prompt) throws IOException {
+  public static long readLong(PrintWriter pen, BufferedReader eyes, String prompt)
+      throws IOException {
     long result = 0;
     boolean done = false;
     while (!done) {
@@ -98,5 +82,4 @@ public class IOUtils {
     } // while
     return result;
   } // readLong(PrintWriter, BufferedReader, String)
-
 } // class IOUtils
