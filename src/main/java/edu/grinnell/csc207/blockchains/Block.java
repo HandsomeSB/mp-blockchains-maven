@@ -15,10 +15,10 @@ public class Block {
   // | Fields |
   // +--------+
   private int numBlocks;
-  private Transaction transactionData;
+  Transaction transaction;
   private Hash previousHash;
   private Hash hash;
-  private long blockNonce; 
+  long nonce; 
 
   // +--------------+------------------------------------------------
   // | Constructors |
@@ -41,7 +41,7 @@ public class Block {
   public Block(int num, Transaction transaction, Hash prevHash,
       HashValidator check) {
     this.numBlocks = num;
-    this.transactionData = transaction;
+    this.transaction = transaction;
     this.previousHash = prevHash;
     if(check != null) { 
       this.mine(check);
@@ -62,7 +62,7 @@ public class Block {
    */
   public Block(int num, Transaction transaction, Hash prevHash, long nonce) {
     this(num, transaction, prevHash, null);
-    this.blockNonce = nonce;
+    this.nonce = nonce;
     this.computeHash();
   } // Block(int, Transaction, Hash, long)
 
@@ -88,17 +88,17 @@ public class Block {
        */
       byte[] ibytes = ByteBuffer.allocate(Integer.BYTES).putInt(blk.numBlocks).array(); // block number
       md.update(ibytes);
-      byte[] sourceBytes = blk.transactionData.getSource().getBytes(); // source
+      byte[] sourceBytes = blk.transaction.getSource().getBytes(); // source
       md.update(sourceBytes);
-      byte[] targetBytes = blk.transactionData.getTarget().getBytes(); // target
+      byte[] targetBytes = blk.transaction.getTarget().getBytes(); // target
       md.update(targetBytes);
-      byte[] amountBytes = ByteBuffer.allocate(Integer.BYTES).putInt(blk.transactionData.getAmount()).array(); // amount
+      byte[] amountBytes = ByteBuffer.allocate(Integer.BYTES).putInt(blk.transaction.getAmount()).array(); // amount
       md.update(amountBytes);
       if(blk.previousHash != null) { 
         byte[] prevBytes = blk.previousHash.getBytes();
         md.update(prevBytes);
       }
-      byte[] lbytes = ByteBuffer.allocate(Long.BYTES).putLong(blk.blockNonce).array(); // nonce
+      byte[] lbytes = ByteBuffer.allocate(Long.BYTES).putLong(blk.nonce).array(); // nonce
       md.update(lbytes);
 
       byte[] hash = md.digest();
@@ -113,7 +113,7 @@ public class Block {
     if(hash != null && check.isValid(hash)) { return; }
     Random rand = new Random();
     do {
-      this.blockNonce = rand.nextLong();
+      this.nonce = rand.nextLong();
       this.computeHash();
     } while (!check.isValid(hash));
   }
@@ -137,7 +137,7 @@ public class Block {
    * @return the transaction.
    */
   public Transaction getTransaction() {
-    return this.transactionData;
+    return this.transaction;
   } // getTransaction()
 
   /**
@@ -146,7 +146,7 @@ public class Block {
    * @return the nonce.
    */
   public long getNonce() {
-    return this.blockNonce;
+    return this.nonce;
   } // getNonce()
 
   /**
@@ -174,6 +174,6 @@ public class Block {
    */
   public String toString() {
     return String.format("[%s, Transaction: %s, Hash: %s, PreviousHash: %s]",
-    this.numBlocks, this.transactionData, this.hash, this.previousHash);
+    this.numBlocks, this.transaction, this.hash, this.previousHash);
   } // toString()
 } // class Block
