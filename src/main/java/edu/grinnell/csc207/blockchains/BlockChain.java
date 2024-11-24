@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
 /**
  * A full blockchain.
@@ -30,8 +31,11 @@ public class BlockChain implements Iterable<Transaction> {
    *   The validator used to check elements.
    */
   public BlockChain(HashValidator check) {
-    this.totalBlocks = 0;
+    this.totalBlocks = 1;
     this.validator = check;
+    Node<Block> first = new Node<Block>(this.mine(new Transaction("", "", 0)));
+    this.head = first;
+    this.tail = first;
   } // BlockChain(HashValidator)
 
   // +---------+-----------------------------------------------------
@@ -74,20 +78,19 @@ public class BlockChain implements Iterable<Transaction> {
    * @throws IllegalArgumentException if (a) the hash is not valid, (b)
    *   the hash is not appropriate for the contents, or (c) the previous
    *   hash is incorrect.
-   *   (d) the balances are legal/correct
    */
   public void append(Block blk) throws IllegalArgumentException {
     checkBlock(blk);
 
     Node<Block> newNode = new Node<Block>(blk);
-    if(this.head == null) { 
-      this.head = newNode;
-      this.tail = this.head;
-    } else { 
-      this.tail.next = newNode;
-      newNode.previous = this.tail;
-      this.tail = newNode;
-    } 
+    // if(this.head == null) { 
+    //   this.head = newNode;
+    //   this.tail = this.head;
+    // } else { 
+    this.tail.next = newNode;
+    newNode.previous = this.tail;
+    this.tail = newNode;
+    // } 
     this.totalBlocks++;
     this.processTransaction(this.balances, blk.getTransaction());
   } // append()
@@ -103,6 +106,9 @@ public class BlockChain implements Iterable<Transaction> {
     if(this.totalBlocks <= 1) { 
       return false;
     } else { 
+      Transaction tailTransaction = this.tail.getData().getTransaction();
+      this.processTransaction(this.balances, new Transaction(tailTransaction.getTarget(), tailTransaction.getSource(), tailTransaction.getAmount()));
+
       this.tail.previous.next = null;
       this.tail = this.tail.previous;
       this.totalBlocks--;
@@ -132,7 +138,7 @@ public class BlockChain implements Iterable<Transaction> {
    */
   private boolean isValidTransaction(Map<String, Integer> balanceMap, Transaction transaction) { 
     int sourceBalance = this.balance(balanceMap, transaction.getSource());
-    return transaction.getSource().equals("") || sourceBalance >= transaction.getAmount();
+    return (transaction.getSource().equals("") || sourceBalance >= transaction.getAmount()) && transaction.getAmount() >= 0;
   }
 
   /**
@@ -146,8 +152,12 @@ public class BlockChain implements Iterable<Transaction> {
     int sourceBalance = this.balance(balanceMap, transaction.getSource());
     int targetBalance = this.balance(balanceMap, transaction.getTarget());
 
-    balanceMap.put(transaction.getSource(), sourceBalance - transaction.getAmount());
-    balanceMap.put(transaction.getTarget(), targetBalance + transaction.getAmount());
+    if(!transaction.getSource().equals("")) { 
+      balanceMap.put(transaction.getSource(), sourceBalance - transaction.getAmount());
+    }
+    if(!transaction.getTarget().equals("")) { 
+      balanceMap.put(transaction.getTarget(), targetBalance + transaction.getAmount());
+    }
   }
 
   /**
@@ -167,9 +177,7 @@ public class BlockChain implements Iterable<Transaction> {
       throw new IllegalArgumentException("Hash is not appropriate for the contents: " + blk);
     } else if (blk.getPrevHash() != null && !blk.getPrevHash().equals(this.getHash())) { 
       throw new IllegalArgumentException("Previous hash is incorrect: " + blk + " tail: " + this.tail.getData());
-    } else if (!this.isValidTransaction(this.balances, blk.getTransaction())) { 
-      throw new IllegalArgumentException("Invalid transaction: " + blk);
-    }
+    } 
   }
 
   /**
@@ -221,31 +229,30 @@ public class BlockChain implements Iterable<Transaction> {
    */
   public void check() throws Exception {
     BlockChain dummy = new BlockChain(validator);
-    
+
     Iterator<Block> blkIterator = this.blocks();
     while(blkIterator.hasNext()) { 
       Block blk = blkIterator.next();
+      // This check is separate because append does not check for invalid transaction
+      if (!this.isValidTransaction(dummy.balances, blk.getTransaction())) { 
+        throw new IllegalArgumentException("Invalid transaction: " + blk);
+      }
       dummy.append(blk);
     }
   } // check()
 
   /**
-   * Return an iterator of all the people who participated in the
-   * system.
-   *
-   * @return an iterator of all the people in the system.
+   * Recalculates the balance.
    */
-  public Iterator<String> users() {
-    return new Iterator<String>() {
-      public boolean hasNext() {
-        return false;   // STUB
-      } // hasNext()
-
-      public String next() {
-        throw new NoSuchElementException();     // STUB
-      } // next()
-    };
-  } // users()
+  private void recalculateBalance() { 
+    Map<String, Integer> balanceMap = new HashMap<>();
+    Iterator<Block> blkIterator = this.blocks();
+    while(blkIterator.hasNext()) { //STUB, use transaction iterator instead
+      Block blk = blkIterator.next();
+      this.processTransaction(balanceMap, blk.transaction);
+    }
+    this.balances = balanceMap;
+  } 
 
   /**
    * Find one user's balance.
@@ -256,9 +263,16 @@ public class BlockChain implements Iterable<Transaction> {
    * @return that user's balance (or 0, if the user is not in the system).
    */
   public int balance(String user) {
+    recalculateBalance();
     return this.balance(this.balances, user);
   } // balance()
 
+  /**
+   * Returns the users current balance in the map being passed in.
+   * @param balanceMap
+   * @param user
+   * @return
+   */
   private int balance(Map<String, Integer> balanceMap, String user) { 
     Integer balance = balanceMap.get(user);
     return balance == null ? 0 : balance.intValue();
@@ -287,6 +301,29 @@ public class BlockChain implements Iterable<Transaction> {
       } // next()
     };
   } // blocks()
+
+  /**
+   * Return an iterator of all the people who participated in the
+   * system.
+   *
+   * @return an iterator of all the people in the system.
+   */
+  public Iterator<String> users() {
+    Iterator<String> namesIterator = balances.keySet().iterator();
+
+    return new Iterator<String>() {
+      public boolean hasNext() {
+        return namesIterator.hasNext();
+      } // hasNext()
+
+      public String next() {
+        if (!hasNext()) {
+          throw new NoSuchElementException();
+        }
+        return namesIterator.next();
+      } // next()
+    };
+  } // users()
 
   /**
    * Get an interator for all the transactions in the chain.
