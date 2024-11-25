@@ -32,8 +32,10 @@ public class Block {
 
   /** Message Digest instance. */
   private static MessageDigest md;
+
   /** Integer byte buffer. Used in computing hash. */
   private static ByteBuffer integerByteBuffer = ByteBuffer.allocate(Integer.BYTES);
+
   /** Long byte buffer. Used in computing hash. */
   private static ByteBuffer longByteBuffer = ByteBuffer.allocate(Long.BYTES);
 

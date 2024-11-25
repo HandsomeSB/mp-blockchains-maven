@@ -8,11 +8,12 @@ import edu.grinnell.csc207.util.IOUtils;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.util.Iterator;
 
 /**
  * A simple UI for our BlockChain class.
  *
- * @author Your Name Here
+ * @author Harrison Zhu
  * @author Samuel A. Rebelsky
  */
 public class BlockChainUI {
@@ -21,7 +22,7 @@ public class BlockChainUI {
   // +-----------+
 
   /** The number of bytes we validate. Should be set to 3 before submitting. */
-  static final int VALIDATOR_BYTES = 0;
+  static final int VALIDATOR_BYTES = 3;
 
   // +---------+-----------------------------------------------------
   // | Helpers |
@@ -83,6 +84,8 @@ public class BlockChainUI {
     String source;
     String target;
     int amount;
+    long nonce;
+    String user;
 
     while (!done) {
       pen.print("\nCommand: ");
@@ -94,19 +97,40 @@ public class BlockChainUI {
 
       switch (command.toLowerCase()) {
         case "append":
-          pen.printf("Command '%s' is not yet implemented", command);
+          source = IOUtils.readLine(pen, eyes, "Source (return for deposit): ");
+          target = IOUtils.readLine(pen, eyes, "Target: ");
+          amount = IOUtils.readInt(pen, eyes, "Amount: ");
+          nonce = IOUtils.readLong(pen, eyes, "Nonce: ");
+          try {
+            chain.append(
+                new Block(
+                    chain.getSize(),
+                    new Transaction(source, target, amount),
+                    chain.getHash(),
+                    nonce));
+          } catch (Exception e) {
+            pen.println("Not valid information");
+          } // try catch
+
           break;
 
         case "balance":
-          pen.printf("Command '%s' is not yet implemented", command);
+          user = IOUtils.readLine(pen, eyes, "Username: ");
+          pen.printf("Balance for '%s' : %s", user, chain.balance(user));
           break;
 
         case "blocks":
-          pen.printf("Command '%s' is not yet implemented", command);
+          Iterator<Block> blocks = chain.blocks();
+          while (blocks.hasNext()) {
+            Block blk = blocks.next();
+            pen.printf("%s => ", blk);
+          } // while
+          pen.println("");
           break;
 
         case "check":
-          pen.printf("Command '%s' is not yet implemented", command);
+          boolean isCorrect = chain.isCorrect();
+          pen.printf("The block chain is %scorrect", isCorrect ? "" : "not ");
           break;
 
         case "help":
@@ -126,15 +150,22 @@ public class BlockChainUI {
           break;
 
         case "remove":
-          pen.printf("Command '%s' is not yet implemented", command);
+          boolean success = chain.removeLast();
+          pen.printf("Remove is %ssuccessful", success ? "" : "not ");
           break;
 
         case "transactions":
-          pen.printf("Command '%s' is not yet implemented", command);
+          for (Transaction transaction : chain) {
+            pen.printf("%s ", transaction);
+          } // for
           break;
 
         case "users":
-          pen.printf("Command '%s' is not yet implemented", command);
+          Iterator<String> users = chain.users();
+          while (users.hasNext()) {
+            String usr = users.next();
+            pen.printf("'%s' ", usr);
+          } // while
           break;
 
         default:
