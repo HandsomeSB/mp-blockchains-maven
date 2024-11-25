@@ -16,12 +16,16 @@ public class BlockChain implements Iterable<Transaction> {
   // +--------+
   /** Total number of blocks in the chain. */
   private int totalBlocks;
+
   /** The first block. */
   private Node<Block> head;
+
   /** The last block. */
   private Node<Block> tail;
+
   /** Has Validator. */
   private HashValidator validator;
+
   /** Name - Balance pair. */
   private Map<String, Integer> balances = new HashMap<String, Integer>();
 
@@ -115,7 +119,7 @@ public class BlockChain implements Iterable<Transaction> {
       this.tail = this.tail.getPrevious();
       this.totalBlocks--;
       return true;
-    }
+    } // if else
   } // removeLast()
 
   /**
@@ -128,25 +132,27 @@ public class BlockChain implements Iterable<Transaction> {
       return this.tail.getData().getHash();
     } else {
       return null;
-    }
+    } // if else
   } // getHash()
 
   /**
    * Check if the NEW transaction is correct, assuming the block chain is valid.
    *
-   * @param transaction
-   * @return
+   * @param balanceMap the map to check the transaction against
+   * @param transaction the transaction to check
+   * @return true if transaction is valid
    */
   private boolean isValidTransaction(Map<String, Integer> balanceMap, Transaction transaction) {
     int sourceBalance = this.balance(balanceMap, transaction.getSource());
     return (transaction.getSource().equals("") || sourceBalance >= transaction.getAmount())
         && transaction.getAmount() >= 0;
-  }
+  } // isValidTransaction(Map<String, Integer>, Transaction)
 
   /**
    * Process the transaction, adding to balances table. Does not check or assume that the
    * transaction is correct. Thus source can have negative balance
    *
+   * @param balanceMap the balance map to modify
    * @param transaction the transaction to process
    */
   private void processTransaction(Map<String, Integer> balanceMap, Transaction transaction) {
@@ -155,11 +161,11 @@ public class BlockChain implements Iterable<Transaction> {
 
     if (!transaction.getSource().equals("")) {
       balanceMap.put(transaction.getSource(), sourceBalance - transaction.getAmount());
-    }
+    } // if source is not empty
     if (!transaction.getTarget().equals("")) {
       balanceMap.put(transaction.getTarget(), targetBalance + transaction.getAmount());
-    }
-  }
+    } // is target is not empty
+  } // processTransaction(Map<String, Integer>, Transaction)
 
   /**
    * Checks if the NEW block is valid. Throws errors if invalid.
@@ -176,8 +182,8 @@ public class BlockChain implements Iterable<Transaction> {
     } else if (blk.getPrevHash() != null && !blk.getPrevHash().equals(this.getHash())) {
       throw new IllegalArgumentException(
           "Previous hash is incorrect: " + blk + " tail: " + this.tail.getData());
-    }
-  }
+    } // check valid
+  } // checkBloc(Block)
 
   /**
    * Checks if the NEW block is valid.
@@ -193,8 +199,8 @@ public class BlockChain implements Iterable<Transaction> {
       return true;
     } catch (Exception e) {
       return false;
-    }
-  }
+    } // try catch
+  } // isValidBlock(Block)
 
   /**
    * Determine if the blockchain is correct in that (a) the balances are legal/correct at every
@@ -209,7 +215,7 @@ public class BlockChain implements Iterable<Transaction> {
       return true;
     } catch (Exception e) {
       return false;
-    }
+    } // try catch
   } // isCorrect()
 
   /**
@@ -228,21 +234,21 @@ public class BlockChain implements Iterable<Transaction> {
       // This check is separate because append does not check for invalid transaction
       if (!this.isValidTransaction(dummy.balances, blk.getTransaction())) {
         throw new IllegalArgumentException("Invalid transaction: " + blk);
-      }
+      } // if not valid
       dummy.append(blk);
-    }
+    } // while iterator has next
   } // check()
 
   /** Recalculates the balance. */
   private void recalculateBalance() {
     Map<String, Integer> balanceMap = new HashMap<>();
-    Iterator<Block> blkIterator = this.blocks();
-    while (blkIterator.hasNext()) { // STUB, use transaction iterator instead
-      Block blk = blkIterator.next();
-      this.processTransaction(balanceMap, blk.transaction);
-    }
+
+    for (Transaction transaction : this) {
+      this.processTransaction(balanceMap, transaction);
+    } // for
+
     this.balances = balanceMap;
-  }
+  } // recalculateBalance
 
   /**
    * Find one user's balance. Will recalculate the balance.
@@ -266,7 +272,7 @@ public class BlockChain implements Iterable<Transaction> {
   private int balance(Map<String, Integer> balanceMap, String user) {
     Integer balance = balanceMap.get(user);
     return balance == null ? 0 : balance.intValue();
-  }
+  } // balance(Map<String, Integer>, String)
 
   /**
    * Get an interator for all the blocks in the chain.
@@ -284,7 +290,7 @@ public class BlockChain implements Iterable<Transaction> {
       public Block next() {
         if (!hasNext()) {
           throw new NoSuchElementException();
-        }
+        } // if
         Block ret = nextNode.getData();
         nextNode = nextNode.getNext();
         return ret;
@@ -308,7 +314,7 @@ public class BlockChain implements Iterable<Transaction> {
       public String next() {
         if (!hasNext()) {
           throw new NoSuchElementException();
-        }
+        } // if
         return namesIterator.next();
       } // next()
     };
@@ -321,12 +327,19 @@ public class BlockChain implements Iterable<Transaction> {
    */
   public Iterator<Transaction> iterator() {
     return new Iterator<Transaction>() {
+      Node<Block> nextNode = head;
+
       public boolean hasNext() {
-        return false; // STUB
+        return nextNode != null;
       } // hasNext()
 
       public Transaction next() {
-        throw new NoSuchElementException(); // STUB
+        if (!hasNext()) {
+          throw new NoSuchElementException();
+        } // if
+        Transaction ret = nextNode.getData().getTransaction();
+        nextNode = nextNode.getNext();
+        return ret;
       } // next()
     };
   } // iterator()

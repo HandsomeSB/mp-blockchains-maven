@@ -2,6 +2,7 @@ package edu.grinnell.csc207.blockchains;
 
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Random;
 
 /**
@@ -14,11 +15,35 @@ public class Block {
   // +--------+------------------------------------------------------
   // | Fields |
   // +--------+
+  /** Block Number. */
   private int numBlocks;
+
+  /** Transaction. */
   Transaction transaction;
+
+  /** Previous Hash. */
   private Hash previousHash;
+
+  /** Hash. */
   private Hash hash;
+
+  /** Nonce. */
   long nonce;
+
+  /** Message Digest instance. */
+  private static MessageDigest md;
+  /** Integer byte buffer. Used in computing hash. */
+  private static ByteBuffer integerByteBuffer = ByteBuffer.allocate(Integer.BYTES);
+  /** Long byte buffer. Used in computing hash. */
+  private static ByteBuffer longByteBuffer = ByteBuffer.allocate(Long.BYTES);
+
+  static {
+    try {
+      md = MessageDigest.getInstance("SHA-256");
+    } catch (NoSuchAlgorithmException e) {
+      throw new RuntimeException("Failed to initialize MessageDigest", e);
+    } // try catch
+  } // static initializer
 
   // +--------------+------------------------------------------------
   // | Constructors |
@@ -39,19 +64,19 @@ public class Block {
     this.previousHash = prevHash;
     if (check != null) {
       this.mine(check);
-    }
+    } // if
   } // Block(int, Transaction, Hash, HashValidator)
 
   /**
    * Create a new block, computing the hash for the block.
    *
    * @param num The number of the block.
-   * @param transaction The transaction for the block.
+   * @param theTransaction The transaction for the block.
    * @param prevHash The hash of the previous block.
    * @param theNonce The nonce of the block.
    */
-  public Block(int num, Transaction transaction, Hash prevHash, long theNonce) {
-    this(num, transaction, prevHash, null);
+  public Block(int num, Transaction theTransaction, Hash prevHash, long theNonce) {
+    this(num, theTransaction, prevHash, null);
     this.nonce = theNonce;
     this.computeHash();
   } // Block(int, Transaction, Hash, long)
@@ -65,47 +90,51 @@ public class Block {
     this.hash = Block.computeHash(this);
   } // computeHash()
 
+  /**
+   * Computes the hash of a block.
+   *
+   * @param blk The block to compute hash on
+   * @return the hash of the block
+   */
   public static Hash computeHash(Block blk) {
-    try {
-      MessageDigest md = MessageDigest.getInstance("sha-256"); // STUB
-      /**
-       * Avoids recreating structures---such as the `MessageDigest`, the various `ByteBuffer`
-       * objects, and other individual arrays---that need not be recreated.
-       */
-      byte[] ibytes =
-          ByteBuffer.allocate(Integer.BYTES).putInt(blk.numBlocks).array(); // block number
-      md.update(ibytes);
-      byte[] sourceBytes = blk.transaction.getSource().getBytes(); // source
-      md.update(sourceBytes);
-      byte[] targetBytes = blk.transaction.getTarget().getBytes(); // target
-      md.update(targetBytes);
-      byte[] amountBytes =
-          ByteBuffer.allocate(Integer.BYTES).putInt(blk.transaction.getAmount()).array(); // amount
-      md.update(amountBytes);
-      if (blk.previousHash != null) {
-        byte[] prevBytes = blk.previousHash.getBytes();
-        md.update(prevBytes);
-      }
-      byte[] lbytes = ByteBuffer.allocate(Long.BYTES).putLong(blk.nonce).array(); // nonce
-      md.update(lbytes);
+    byte[] ibytes = Block.integerByteBuffer.putInt(blk.numBlocks).array(); // block number
+    Block.integerByteBuffer.clear();
+    md.update(ibytes);
+    byte[] sourceBytes = blk.transaction.getSource().getBytes(); // source
+    md.update(sourceBytes);
+    byte[] targetBytes = blk.transaction.getTarget().getBytes(); // target
+    md.update(targetBytes);
+    byte[] amountBytes =
+        Block.integerByteBuffer.putInt(blk.transaction.getAmount()).array(); // amount
+    Block.integerByteBuffer.clear();
+    md.update(amountBytes);
+    if (blk.previousHash != null) {
+      byte[] prevBytes = blk.previousHash.getBytes();
+      md.update(prevBytes);
+    } // if
+    byte[] lbytes = Block.longByteBuffer.putLong(blk.nonce).array(); // nonce
+    Block.longByteBuffer.clear();
+    md.update(lbytes);
 
-      byte[] hash = md.digest();
-      return new Hash(hash);
-    } catch (Exception e) {
-      return new Hash(new byte[0]);
-    }
-  }
+    byte[] hash = md.digest();
+    return new Hash(hash);
+  } // computerHash(Block)
 
+  /**
+   * Mine the nonce.
+   *
+   * @param check the HashValidator
+   */
   private void mine(HashValidator check) {
     if (hash != null && check.isValid(hash)) {
       return;
-    }
+    } // if
     Random rand = new Random();
     do {
       this.nonce = rand.nextLong();
       this.computeHash();
     } while (!check.isValid(hash));
-  }
+  } // mine(HashValidator)
 
   // +---------+-----------------------------------------------------
   // | Methods |

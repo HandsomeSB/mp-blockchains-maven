@@ -5,14 +5,15 @@ package edu.grinnell.csc207.blockchains;
  * node.
  *
  * @author Harrison Zhu
- *
  * @param <T> Type of data enclosed within the node
  */
 public class Node<T> {
   /** Enclosed data. */
   private T data;
+
   /** Pointer to next node. */
   private Node<T> next;
+
   /** Pointer to previous node. */
   private Node<T> previous;
 
